@@ -1,14 +1,13 @@
 -- Delta Executor / LocalScript
-
 local player = game.Players.LocalPlayer
 
+-- Esperar a que todo el juego esté cargado
 if not game:IsLoaded() then
-	game.Loaded:Wait()
+    game.Loaded:Wait()
 end
--- Pequeño delay para asegurarse que todos los objetos iniciales estén disponibles
-task.wait(1)
+task.wait(1) -- asegurar que todos los objetos iniciales estén disponibles
 
--- GUI compacta, arrastrable y cerrable
+-- ===== GUI =====
 local gui = Instance.new("ScreenGui")
 gui.Name = "EventDebugger"
 gui.Parent = player:WaitForChild("PlayerGui")
@@ -20,6 +19,7 @@ frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.BorderSizePixel = 2
 frame.Parent = gui
 
+-- Botón cerrar
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 25, 0, 25)
 closeBtn.Position = UDim2.new(1, -30, 0, 5)
@@ -31,7 +31,7 @@ closeBtn.TextSize = 18
 closeBtn.Parent = frame
 closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- ScrollingFrame con scroll horizontal y vertical
+-- ScrollingFrame con scroll vertical y horizontal
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, -10, 1, -35)
 scrollFrame.Position = UDim2.new(0,5,0,30)
@@ -47,89 +47,84 @@ uiListLayout.Parent = scrollFrame
 
 -- Función de log
 local function log(text, color)
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0,0,0,18)
-	label.AutomaticSize = Enum.AutomaticSize.XY
-	label.BackgroundTransparency = 1
-	label.TextColor3 = color or Color3.fromRGB(255,255,255)
-	label.Font = Enum.Font.SourceSans
-	label.TextSize = 14
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Text = text
-	label.Parent = scrollFrame
-	scrollFrame.CanvasSize = UDim2.new(0, label.AbsoluteSize.X + 10, 0, uiListLayout.AbsoluteContentSize.Y)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0,0,0,18)
+    label.AutomaticSize = Enum.AutomaticSize.XY
+    label.BackgroundTransparency = 1
+    label.TextColor3 = color or Color3.fromRGB(255,255,255)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Text = text
+    label.Parent = scrollFrame
+    scrollFrame.CanvasSize = UDim2.new(0, label.AbsoluteSize.X + 10, 0, uiListLayout.AbsoluteContentSize.Y)
 end
 
--- Hacer el frame arrastrable
+-- ===== Arrastrable =====
 local dragging, dragInput, mousePos, framePos = false, nil, nil, nil
 frame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		mousePos = input.Position
-		framePos = frame.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then dragging = false end
-		end)
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
 end)
 frame.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
+    if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
 end)
 game:GetService("UserInputService").InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		local delta = input.Position - mousePos
-		frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
-	end
+    if input == dragInput and dragging then
+        local delta = input.Position - mousePos
+        frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
 end)
 
--- Hook global FireServer
+-- ===== Hook global FireServer =====
 local mt = getrawmetatable(game)
 setreadonly(mt,false)
-local oldIndex = mt.__index
-mt.__index = newcclosure(function(self,key)
-	local result = oldIndex(self,key)
-	if key == "FireServer" and typeof(self)=="Instance" and self:IsA("RemoteEvent") then
-		local oldFire = result
-		result = newcclosure(function(remoteSelf,...)
-			local args={...}
-			local str={}
-			for i,v in ipairs(args) do str[i]=tostring(v) end
-			log("[Enviado] "..remoteSelf:GetFullName().." | Args: "..table.concat(str,", "), Color3.fromRGB(0,200,0))
-			return oldFire(remoteSelf,...)
-		end)
-	end
-	return result
+local oldNamecall = mt.__namecall
+
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    if method == "FireServer" and self:IsA("RemoteEvent") then
+        local args = {...}
+        local str = {}
+        for i,v in ipairs(args) do str[i] = tostring(v) end
+        log("[Enviado] "..self:GetFullName().." | Args: "..table.concat(str,", "), Color3.fromRGB(0,200,0))
+    end
+    return oldNamecall(self, ...)
 end)
 setreadonly(mt,true)
 
--- Hook para RemoteEvents y BindableEvents existentes o futuros
-local function hook(event)
-	if event:IsA("RemoteEvent") then
-		-- OnClientEvent
-		event.OnClientEvent:Connect(function(...)
-			local args={...}
-			local str={}
-			for i,v in ipairs(args) do str[i]=tostring(v) end
-			log("[Recibido] "..event:GetFullName().." | Args: "..table.concat(str,", "), Color3.fromRGB(0,150,255))
-		end)
-	elseif event:IsA("BindableEvent") then
-		event.Event:Connect(function(...)
-			local args={...}
-			local str={}
-			for i,v in ipairs(args) do str[i]=tostring(v) end
-			log("[BindableEvent] "..event:GetFullName().." | Args: "..table.concat(str,", "), Color3.fromRGB(255,200,0))
-		end)
-	end
+-- ===== Hook para RemoteEvents y BindableEvents =====
+local function hookEvent(event)
+    if event:IsA("RemoteEvent") then
+        event.OnClientEvent:Connect(function(...)
+            local args={...}
+            local str={}
+            for i,v in ipairs(args) do str[i]=tostring(v) end
+            log("[Recibido] "..event:GetFullName().." | Args: "..table.concat(str,", "), Color3.fromRGB(0,150,255))
+        end)
+    elseif event:IsA("BindableEvent") then
+        event.Event:Connect(function(...)
+            local args={...}
+            local str={}
+            for i,v in ipairs(args) do str[i]=tostring(v) end
+            log("[BindableEvent] "..event:GetFullName().." | Args: "..table.concat(str,", "), Color3.fromRGB(255,200,0))
+        end)
+    end
 end
 
--- Escaneo recursivo completo
+-- ===== Escaneo completo del juego =====
 local function scan(parent)
-	for _,c in ipairs(parent:GetChildren()) do
-		hook(c)
-		scan(c)
-	end
+    for _,c in ipairs(parent:GetChildren()) do
+        hookEvent(c)
+        scan(c)
+    end
 end
-scan(game)
 
--- Monitorear cualquier descendiente nuevo
-game.DescendantAdded:Connect(hook)
+scan(game) -- escanear todos los eventos existentes
+game.DescendantAdded:Connect(hookEvent) -- conectar futuros eventos
