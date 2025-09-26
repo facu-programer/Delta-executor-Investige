@@ -2,6 +2,12 @@
 
 local player = game.Players.LocalPlayer
 
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+-- Pequeño delay para asegurarse que todos los objetos iniciales estén disponibles
+task.wait(1)
+
 -- GUI compacta, arrastrable y cerrable
 local gui = Instance.new("ScreenGui")
 gui.Name = "EventDebugger"
