@@ -1,5 +1,5 @@
 -- StarterPlayerScripts/GUIRebuilder.lua
-local Players = game:GetService("Players")
+local Players = game.Players
 local player = Players.LocalPlayer
 local parentGui = player:WaitForChild("PlayerGui")
 
