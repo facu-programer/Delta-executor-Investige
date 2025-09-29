@@ -184,9 +184,9 @@ local function tableToString(t)
 		elseif typeof(v) == "UDim2" then
 			final = final .. k .. ": UDim2, XScale: " .. v.X.Scale .. ", XOffset: " .. v.X.Offset .. ", YScale: " .. v.Y.Scale .. ", YOffset: " .. v.Y.Offset
 		elseif typeof(v) == "Instance" then
-			final = final .. k .. ": Instance, Not supported"
+			final = final .. k .. ": Instance " .. v.ClassName .. ", Not supported"
 		else
-			final = final .. k .. ": " .. v.ClassName .. ", Not supported"
+			final = final .. k .. ": " .. typeof(v) .. ", Not supported"
 		end
 	end
 
@@ -209,16 +209,13 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 		
 		local args = {...}
 		
-		for _, e in ipairs(hooks) do
-			-- Registrar después en un hilo separado
-			task.spawn(function()
-				for _, e in ipairs(hooks) do
-					if e[1] == self then
-						pcall(e[2], table.unpack(args))
-					end
+		task.spawn(function()
+			for _, e in ipairs(hooks) do
+				if e[1] == self then
+					pcall(e[2], table.unpack(args))
 				end
-			end)
-		end
+			end
+		end)
 		
 		return result
 	end
