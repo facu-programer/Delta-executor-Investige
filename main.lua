@@ -144,7 +144,7 @@ local function addMessage(text)
 	msg.TextSize = 20
 	msg.TextXAlignment = Enum.TextXAlignment.Left
 	msg.Text = text
-	msg.Parent = script.Parent
+	msg.Parent = GUI.FWare.ScrollingFrame
 end
 
 local function tableToString(t)
@@ -234,9 +234,14 @@ local function react(e)
 end
 
 for _, e in ipairs(game:GetDescendants()) do
-	react(e)
+	if e:IsA("RemoteEvent") or e:IsA("BindableEvent") then
+		react(e)
+	end
 end
 
 game.DescendantAdded:Connect(function(e)
-	react(e)
+	if e:IsA("RemoteEvent") or e:IsA("BindableEvent") then
+		react(e)
+	end
+	
 end)
