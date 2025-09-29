@@ -206,11 +206,15 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 
 	if method == "FireServer" and self:IsA("RemoteEvent") then
 		local result = oldNamecall(self, ...)
-		for _, e in ipairs(hooks) do
-			if e[1] == self then
-				e[2](...)
+
+		-- Registrar después en un hilo separado
+		task.spawn(function()
+			for _, e in ipairs(hooks) do
+				if e[1] == self then
+					pcall(e[2], ...)
+				end
 			end
-		end
+		end)
 		
 		return result
 	end
