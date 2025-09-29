@@ -205,7 +205,6 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 	local method = getnamecallmethod()
 
 	if method == "FireServer" and self:IsA("RemoteEvent") then
-		local result = oldNamecall(self, ...)
 		
 		local args = {...}
 		
@@ -217,7 +216,7 @@ oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
 			end
 		end)
 		
-		return result
+		return oldNamecall(self, ...)
 	end
 	
 	return oldNamecall(self, ...)
