@@ -197,7 +197,7 @@ end
 local hooks = {}
 
 local function hookear(event, func)
-	table.insert(hooks, {event, func})
+	--table.insert(hooks, {event, func})
 end
 
 local oldNamecall
