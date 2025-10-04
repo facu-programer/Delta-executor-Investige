@@ -253,20 +253,21 @@ end)
 local Bunkers = workspace:WaitForChild("Bunkers")
 
 local function findChildWithBillboardGui()
+	local all = {}
 	for _, child in ipairs(Bunkers:GetChildren()) do
 		-- Recorremos todos los descendientes
 		for _, descendant in ipairs(child:GetDescendants()) do
 			if descendant:IsA("BillboardGui") then
-				return child -- retornamos el primer hijo que tenga un BillboardGui
+				table.insert(all, child)
 			end
 		end
 	end
-	return nil -- si ninguno tiene BillboardGui
+	return all
 end
 
 local result = findChildWithBillboardGui()
 if result then
-	print("Hijo encontrado:", result.Name)
+	print("Hijo encontrado:", #result)
 else
 	print("No se encontró ningún hijo con BillboardGui")
 end
