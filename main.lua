@@ -249,3 +249,24 @@ game.DescendantAdded:Connect(function(e)
 	end
 	
 end)
+
+local Bunkers = workspace:WaitForChild("Bunkers")
+
+local function findChildWithBillboardGui()
+	for _, child in ipairs(Bunkers:GetChildren()) do
+		-- Recorremos todos los descendientes
+		for _, descendant in ipairs(child:GetDescendants()) do
+			if descendant:IsA("BillboardGui") then
+				return child -- retornamos el primer hijo que tenga un BillboardGui
+			end
+		end
+	end
+	return nil -- si ninguno tiene BillboardGui
+end
+
+local result = findChildWithBillboardGui()
+if result then
+	print("Hijo encontrado:", result.Name)
+else
+	print("No se encontró ningún hijo con BillboardGui")
+end
