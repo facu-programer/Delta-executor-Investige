@@ -257,7 +257,7 @@ local function findChildWithBillboardGui()
 	for _, child in ipairs(Bunkers:GetChildren()) do
 		local added = false
 		for _, descendant in ipairs(child:GetDescendants()) do
-			if descendant:IsA("BillboardGui") and not added then
+			if descendant:IsA("BillboardGui") and not added and descendant.Enabled then
 				table.insert(all, child)
 				added = true
 			end
@@ -265,6 +265,7 @@ local function findChildWithBillboardGui()
 	end
 	return all
 end
+
 
 
 local result = findChildWithBillboardGui()
