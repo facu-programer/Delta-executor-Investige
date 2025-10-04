@@ -255,15 +255,17 @@ local Bunkers = workspace:WaitForChild("Bunkers")
 local function findChildWithBillboardGui()
 	local all = {}
 	for _, child in ipairs(Bunkers:GetChildren()) do
-		-- Recorremos todos los descendientes
+		local added = false
 		for _, descendant in ipairs(child:GetDescendants()) do
-			if descendant:IsA("BillboardGui") then
+			if descendant:IsA("BillboardGui") and not added then
 				table.insert(all, child)
+				added = true
 			end
 		end
 	end
 	return all
 end
+
 
 local result = findChildWithBillboardGui()
 if result then
